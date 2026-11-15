@@ -1,2 +1,3 @@
 # Offrigo — Maroc
-Pipeline quotidien d’offres vérifiées. Voir SOURCES.md pour les autorisations requises.
+Collecte quotidienne 07:00 UTC. Voir SOURCES.md et le guide de test.
+Aucune source autorisée configurée : aucune offre inventée.

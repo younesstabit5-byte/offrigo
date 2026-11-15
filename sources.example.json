@@ -1,0 +1,15 @@
+[
+  {
+    "id": "marchand-maroc",
+    "name": "Source à connecter — fournisseur Maroc",
+    "format": "json",
+    "enabled": false,
+    "urlEnv": "MA_FEED_URL",
+    "allowedHosts": [
+      "example.invalid"
+    ],
+    "termsUrl": "https://example.invalid/terms",
+    "permissionReference": "À remplacer par un accord de collecte quotidienne et redistribution publique, concernant exclusivement le Maroc",
+    "publicRedistributionAllowed": false
+  }
+]

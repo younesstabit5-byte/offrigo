@@ -1,0 +1,106 @@
+name: Daily Offrigo offers
+on:
+  schedule:
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: daily-offrigo-offers
+  cancel-in-progress: false
+jobs:
+  collect:
+    if: github.event.repository.private == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: source
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        id: previous
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: previous
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --ignore-scripts && npm run typecheck && npm test
+        working-directory: source
+      - name: Recover last published file
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p site
+          if [ '${{ steps.previous.outcome }}' = 'success' ]; then
+            cp previous/offers.json site/offers.json
+          else
+            # Only a genuinely absent branch permits the initial empty bootstrap.
+            count=$(gh api "repos/$GITHUB_REPOSITORY/branches" --paginate --jq '[.[] | select(.name == "gh-pages")] | length')
+            test "$count" = 0
+            cp source/offers.json site/offers.json
+          fi
+      - name: Collect authorized feeds
+        working-directory: source
+        env:
+          OUTPUT_FILE: ../site/offers.json
+          MA_FEED_URL: ${{ secrets.MA_FEED_URL }}
+        run: npm run collect
+      - name: Preserve published bytes when no update
+        run: |
+          cp source/offers.schema.json site/offers.schema.json
+          cp source/public/index.html site/index.html
+      - name: Save last valid output
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ '${{ steps.previous.outcome }}' = 'success' ]; then
+            cp site/offers.json site/offers.schema.json site/index.html previous/
+            cd previous
+          else
+            cd site
+            git init -b gh-pages
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add offers.json offers.schema.json index.html
+          if ! git diff --cached --quiet; then
+            git commit -m 'Publish validated Morocco offers'
+            git -c http.extraheader="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)" push "https://github.com/$GITHUB_REPOSITORY.git" HEAD:gh-pages
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: offers-site
+          path: site
+          retention-days: 1
+  deploy:
+    needs: collect
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: offers-site
+          path: site
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - uses: actions/deploy-pages@v4
+        id: deployment

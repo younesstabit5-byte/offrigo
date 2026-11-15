@@ -1,0 +1,21 @@
+# Sources recommandées — Maroc uniquement
+
+**Aucun flux tiers n’est activé dans cette livraison.** Une page publique ou un RSS ne constitue pas une licence de redistribution. Aucun accès HTML n’est automatisé. Les autorisations doivent couvrir les collectes quotidiennes, la conservation, l’affichage mobile et la republication publique du JSON sur GitHub Pages. `robots.txt` ne remplace pas cette autorisation.
+
+| Source / usage | Accès et conditions | État |
+|---|---|---|
+| Flux JSON/RSS fourni directement par une enseigne présente au Maroc, un hôtel ou une agence marocaine | Option recommandée : accord écrit gratuit précisant territoire, fréquence, attribution, dates tarifaires et redistribution publique. Le marchand fournit les champs définis dans `offers.schema.json`. Aucune page produit n’est aspirée. | Source à connecter ; gratuit seulement si accord obtenu sans frais. |
+| [Admitad : programmes Maroc](https://www.admitad.com/store/morocco/) — shopping | [Flux XML et outils éditeurs](https://www.admitad.com/affiliates/). Inscription et acceptation de chaque programme, territoire de vente, licence du flux, attribution et règles des liens affiliés à vérifier. Un flux affilié n’autorise pas automatiquement la redistribution brute en accès public. Adapter le XML sans inventer de période de validité. | Candidat, pas de flux ni autorisation fournis. |
+| Agences marocaines, compagnies aériennes et hôtels : flux partenaire négocié | Pour vols au départ de villes marocaines et hébergements dans le pays. Exiger le prix MAD, son périmètre (personne/chambre/forfait), les dates du voyage et la période de validité tarifaire. Les disponibilités d’un moteur de réservation ne prouvent pas une promotion. | Candidat contractuel ; aucun tarif API payant activé. |
+| [Eventbrite : API](https://www.eventbrite.com/platform/docs/api-basics) — organisateurs marocains autorisant l’usage de leurs données | [Conditions API](https://www.eventbrite.sg/help/en-gb/articles/833731/eventbrite-api-terms-of-use/). Clé d’accès, autorisation de l’organisateur et droits de redistribution nécessaires ; respecter les quotas. L’accès à une organisation ne donne pas un catalogue mondial. Dates d’événement et dates de validité du prix restent distinctes. | Candidat ; adaptateur métier à ajouter lorsque le flux autorisé est fourni. |
+| [Guichet](https://guichet.com/) et organisateurs marocains — événements | Demander un flux partenaire officiel, les conditions de réutilisation, le prix réduit et sa preuve. Aucune API gratuite publique ni licence de collecte n’est supposée. Pas de scraping du site. | Source à connecter. |
+
+Les sources ci-dessus sont des pistes de raccordement, pas une promesse d’offres quotidiennes disponibles gratuitement. Aucune API gratuite et autorisée garantissant les trois rubriques avec toutes les dates tarifaires n’a été identifiée. Ticketmaster Discovery n’est pas utilisé : une fin d’événement ne constitue pas une expiration de promotion et ses conditions encadrent les collectes non déclenchées par un utilisateur.
+
+## Contrat d’entrée
+
+Le connecteur `json` lit `{ "offers": [...] }`, avec les objets sans `id`, `collectedAt` ni `sourceName` : ces trois métadonnées sont produites par le collecteur. Les champs métier doivent provenir du fournisseur. Le connecteur `rss-json` lit uniquement un objet JSON structuré dans `item/offrigo:offer` (CDATA), sous namespace `xmlns:offrigo="urn:offrigo:offers:1"`. Un RSS ordinaire dépourvu de prix ou d’expiration ne génère aucune offre. Les autres formats XML/CSV/API nécessitent un adaptateur explicite ; aucune extraction de chiffres depuis du texte libre n’est utilisée.
+
+Les prix sont exclusivement en MAD. Chaque événement exige `regularPrice` supérieur à `price` et `discountSourceUrl`, fournis par la source ; leur absence entraîne un rejet. La ville de l’événement ou du magasin doit appartenir à la liste marocaine ; `En ligne` est admis pour une enseigne livrant dans le pays. Le pipeline ne calcule aucun badge « promo vérifiée » ni historique fictif. Une offre issue d’un flux reste un prix à confirmer chez le fournisseur.
+
+Ne jamais mettre des clés d’accès dans `sourceUrl`. Seules les URL de collecte sont dans GitHub Secrets. Le JSON publié contient exclusivement des liens fournisseurs destinés au public.
