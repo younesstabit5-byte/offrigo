@@ -1,0 +1,21 @@
+import {visibleObserved} from './observed-model.mjs';
+const t={fr:{heading:'Voyager au départ du Maroc',intro:'Sélection de prix observés sur les pages officielles. Prix et disponibilités à reconfirmer ; expiration du tarif inconnue. Cette sélection n’est pas actualisée automatiquement.',groups:['Vols · aller simple','Vols · aller-retour','Séjours · vol + hôtel'],from:'Dès ',person:' / personne',date:'Départ',back:'Retour',observed:'Page consultée le ',unknown:'Expiration du prix inconnue',source:'Vérifier chez le fournisseur',included:'Inclus : ',excluded:'Non inclus : ',empty:'Aucun tarif observé dans cette catégorie.',stale:'Observation ancienne : prix à revérifier.',error:'Les prix observés sont indisponibles.',offline:'Mode hors ligne : observations enregistrées.'},ar:{heading:'سافر انطلاقاً من المغرب',intro:'أسعار رُصدت على الصفحات الرسمية. السعر والتوفر يحتاجان إلى تأكيد، وتاريخ انتهاء السعر غير معروف. لا تُحدّث هذه القائمة تلقائياً.',groups:['رحلات ذهاب فقط','رحلات ذهاب وعودة','إقامة مع الطيران والفندق'],from:'ابتداءً من ',person:' / للشخص',date:'المغادرة',back:'العودة',observed:'تاريخ الاطلاع على الصفحة: ',unknown:'تاريخ انتهاء السعر غير معروف',source:'تحقق لدى المزوّد',included:'يشمل: ',excluded:'لا يشمل: ',empty:'لا توجد أسعار مرصودة في هذه الفئة.',stale:'رصد قديم: يرجى إعادة التحقق من السعر.',error:'الأسعار المرصودة غير متاحة.',offline:'بدون اتصال: آخر بيانات محفوظة.'}};
+const root=document.createElement('section');root.id='observed-travel';document.getElementById('filters').before(root);
+let feed=null,offline=false;
+function item(tag,text,parent){const el=document.createElement(tag);el.textContent=text;parent.append(el);return el}
+function render(){const lang=document.documentElement.lang==='ar'?'ar':'fr',w=t[lang];root.replaceChildren();item('h2',w.heading,root);item('p',w.intro,root);if(offline)item('p',w.offline,root);
+if(!feed){item('p',w.error,root);return}
+let rows=visibleObserved(feed);const query=document.getElementById('search').value.toLocaleLowerCase();rows=rows.filter(o=>[o.title,o.origin,o.destination,o.sourceName].join(' ').toLocaleLowerCase().includes(query));
+const date=d=>new Date(d+'T12:00:00Z').toLocaleDateString(lang==='ar'?'ar-MA':'fr-MA');
+for(let i=0;i<3;i++){const selected=rows.filter(o=>i===2?o.travelKind==='package':o.travelKind==='flight'&&o.tripType===(i===0?'oneWay':'roundTrip'));if(!selected.length)continue;item('h3',w.groups[i],root);const grid=item('div','',root);grid.className='grid';
+for(const o of selected){const a=item('article','',grid);if(o.travelKind==='package')a.className='package-card';item('small',w.groups[i],a);item('h2',o.title,a);item('strong',w.from+new Intl.NumberFormat(lang==='ar'?'ar-MA':'fr-MA',{style:'currency',currency:'MAD'}).format(o.price),a);item('small',w.person,a);item('p',o.origin+' → '+o.destination,a);item('p',w.date+' : '+date(o.departureDate)+(o.returnDate?' · '+w.back+' : '+date(o.returnDate):''),a);
+item('p',lang==='ar'?(o.travelKind==='package'?'للشخص في غرفة ثلاثية؛ الفندق والتوفر يحتاجان إلى تأكيد':'للشخص بالدرجة الاقتصادية؛ الخيارات تحتاج إلى تأكيد'):o.priceBasis,a);
+if(o.included.length)item('p',w.included+(lang==='ar'?'طيران ذهاب وعودة، 7 ليالٍ مع الإفطار، النقل وعشاء على متن قارب':o.included.join(' · ')),a);
+if(o.excluded.length)item('small',w.excluded+(lang==='ar'?'الوجبات غير المذكورة والرحلات الاختيارية والمصاريف الشخصية':o.excluded.join(' · ')),a);
+item('small',w.unknown,a);item('small',o.sourceName+' · '+w.observed+new Date(o.collectedAt).toLocaleString(lang==='ar'?'ar-MA':'fr-MA'),a);
+if(Date.now()-Date.parse(o.collectedAt)>48*3600000)item('small',w.stale,a);
+const link=item('a',w.source,a);link.href=o.sourceUrl;link.target='_blank';link.rel='noopener noreferrer';
+}}
+}
+async function load(){try{const r=await fetch('observed-fares.json',{cache:'no-store',signal:AbortSignal.timeout(15000)});if(!r.ok)throw Error();const v=await r.json();visibleObserved(v);feed=v;try{localStorage.setItem('offrigo-observed-v1',JSON.stringify(v))}catch{}}catch{try{feed=JSON.parse(localStorage.getItem('offrigo-observed-v1'));visibleObserved(feed);offline=true}catch{feed=null}}render()}
+new MutationObserver(render).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});document.getElementById('search').addEventListener('input',render);setInterval(render,60000);load();

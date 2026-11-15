@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {visibleObserved} from '../public/observed-model.mjs';
+const feed=JSON.parse(fs.readFileSync(new URL('../public/observed-fares.json',import.meta.url)));
+const now=Date.parse('2026-11-15T03:00:00Z');
+test('Observed selection contains sourced flights and packages with unknown expiry',()=>{const rows=visibleObserved(feed,now);assert.equal(rows.length,6);assert.equal(rows[0].price,398);assert.equal(rows.filter(x=>x.travelKind==='package').length,2);assert.ok(rows.every(x=>x.validUntil===null));});
+test('Past departures, invalid prices, foreign origin and fake return rejected',()=>{const o=feed.offers[0];for(const change of [{departureDate:'2026-11-14'},{price:-1},{currency:'EUR'},{origin:'Paris'},{tripType:'oneWay',returnDate:'2026-12-01'},{validUntil:'2026-11-20T00:00:00Z'}])assert.equal(visibleObserved({...feed,offers:[{...o,...change}]},now).length,0)});
+test('Repeated observations are deduplicated; original timestamp remains',()=>{const o=feed.offers[0];const rows=visibleObserved({...feed,offers:[o,o]},now);assert.equal(rows.length,1);assert.equal(rows[0].collectedAt,o.collectedAt)});
+test('All expired travel dates disappear without refreshing the price timestamp',()=>{assert.equal(visibleObserved(feed,Date.parse('2027-01-01T00:00:00Z')).length,0)});

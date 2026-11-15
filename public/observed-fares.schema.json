@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Offrigo editorial observed fares",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "generatedAt",
+    "status",
+    "offers"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "const": "observed"
+    },
+    "offers": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "origin",
+          "destination",
+          "title",
+          "price",
+          "currency",
+          "tripType",
+          "travelKind",
+          "departureDate",
+          "returnDate",
+          "validFrom",
+          "validUntil",
+          "priceStatus",
+          "collectedAt",
+          "sourceName",
+          "sourceUrl",
+          "collectionMethod",
+          "priceBasis",
+          "included",
+          "excluded"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "const": "travel"
+          },
+          "origin": {
+            "enum": [
+              "Casablanca",
+              "Rabat",
+              "Marrakech",
+              "Tanger",
+              "Agadir",
+              "Fès",
+              "Nador"
+            ]
+          },
+          "destination": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "price": {
+            "type": "number",
+            "minimum": 0
+          },
+          "currency": {
+            "const": "MAD"
+          },
+          "tripType": {
+            "enum": [
+              "oneWay",
+              "roundTrip"
+            ]
+          },
+          "travelKind": {
+            "enum": [
+              "flight",
+              "package"
+            ]
+          },
+          "departureDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "returnDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "validFrom": {
+            "type": "null"
+          },
+          "validUntil": {
+            "type": "null"
+          },
+          "priceStatus": {
+            "const": "observed"
+          },
+          "collectedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sourceName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://"
+          },
+          "collectionMethod": {
+            "const": "editorial-review"
+          },
+          "priceBasis": {
+            "type": "string"
+          },
+          "included": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "excluded": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sourceNotice": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

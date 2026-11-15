@@ -58,7 +58,7 @@ jobs:
       - name: Preserve published bytes when no update
         run: |
           cp source/offers.schema.json site/offers.schema.json
-          cp source/public/index.html site/index.html
+          cp source/public/* site/
       - name: Save last valid output
         env:
           GH_TOKEN: ${{ github.token }}
